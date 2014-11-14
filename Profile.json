@@ -1,0 +1,16 @@
+{
+	"name" : "Heather Hua",
+	"location" : "San Francisco",
+	"travel" : true,
+	"interests" : [
+		"mobile",
+		"web%20design",
+		"travel",
+		"sports",
+		"food", 
+	],
+	"locations" : [
+		"San%20Diego",
+		"new%20york"
+	]
+}
