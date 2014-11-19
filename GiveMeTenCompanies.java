@@ -23,50 +23,6 @@ public class GiveMeTenCompanies {
 
 	public static void main(String[] args){
 
-		Set tagIdSet = new HashSet(100);
-		HashSet<String> locationIdSet = null;
-
-		JSONObject jsonObject = new JSONObject();
-		JSONParser jsonParser = new JSONParser();
-
-		// Make sure that candidate profile is given
-		if(args.length > 0) {
-			try{
-
-				FileReader profileReader = new FileReader(args[0].toString());
-				jsonObject = (JSONObject) jsonParser.parse(profileReader);
-			}
-			catch(Exception ex){
-				System.out.println("ERROR: File could not be read");
-				System.exit(1);
-			}
-		}
-		else {
-			System.out.println("ERROR: Please provide a candidate file.");
-			System.exit(2);
-		}
-		
-		// List of candidate's interests
-		JSONArray marketTags = (JSONArray) jsonObject.get("interests");
-		JSONArray locationTags = null;
-
-		// Check locations only if you are willing to travel
-		if(jsonObject.get("travel").toString().equals("true")){
-			locationTags = (JSONArray) jsonObject.get("locations");
-			locationIdSet = new HashSet(100);
-		}
-
-		// Create list of tag IDS for future search
-		if(marketTags != null){
-
-			getTagIds(marketTags, MARKET_TAG, tagIdSet);
-		}
-
-		// Create list of location tags
-		if(locationTags != null){
-			getTagIds(locationTags, LOCATION_TAG, locationIdSet);
-		}
-
 		String tagID;
 		StringBuffer builder = new StringBuffer();
 		String getStartups;
@@ -77,13 +33,50 @@ public class GiveMeTenCompanies {
 		JSONArray locationsArray;
 		JSONObject locationObject;
 		JSONParser coParse = new JSONParser();
+
+		JSONParser profileParser = new JSONParser();
+		JSONObject profile = new JSONObject();
+
+		// Check for candidate profile
+		if(args.length > 0) {
+			try{
+				FileReader profileReader = new FileReader(args[0].toString());
+				profile = (JSONObject) profileParser.parse(profileReader);
+			}
+			catch(Exception ex){
+				System.out.println("ERROR: File could not be read");
+				System.exit(1);
+			}
+		} else {
+			System.out.println("ERROR: Did not provide a candidate file.");
+			System.exit(2);
+		}
+		
+		// Get candidate's interests
+		Set tagIdSet = new HashSet(100);
+		JSONArray marketTags = (JSONArray) profile.get("interests");
+		if(marketTags != null){
+			getTagIds(marketTags, MARKET_TAG, tagIdSet);
+		}
+
+		// Check locations only if you are willing to travel
+		HashSet<String> locationIdSet = null;
+		JSONArray locationTags = new JSONArray();
+		locationTags.add(profile.get("location"));
+
+		if(profile.get("travel").toString().equals("true")){
+			locationTags.addAll((JSONArray)profile.get("locations"));
+
+			locationIdSet = new HashSet(100);
+			getTagIds(locationTags, LOCATION_TAG, locationIdSet);
+		}
 		
 		// Start at 1 to make reading the list more human readable
-		int finalcount = 1;
+		int count = 1;
 
 		Iterator tagIter = tagIdSet.iterator();
 
-		while( tagIter.hasNext() && finalcount < 11 ) {
+		while( tagIter.hasNext() && count < 11 ) {
 			tagID = tagIter.next().toString();
 
 			getStartups = BASE_URL + "tags/" + tagID + "/startups?order=popularity&page=1&per_page=1";
@@ -93,9 +86,8 @@ public class GiveMeTenCompanies {
 				HttpURLConnection con = (HttpURLConnection) startupURL.openConnection();
 				con.setRequestProperty("User-Agent", USER_AGENT);
 
-				BufferedReader in = new BufferedReader(
-					new InputStreamReader(con.getInputStream()));
-				String inputLine;
+				BufferedReader in = new BufferedReader(     new
+				InputStreamReader(con.getInputStream())); String inputLine;	
 
 				while ((inputLine = in.readLine()) != null) {
 					builder.append(inputLine);
@@ -121,10 +113,10 @@ public class GiveMeTenCompanies {
 				while(hashIt.hasNext()){
 					if(hashIt.next().toString().equals(locationID)){
 
-						System.out.println(finalcount + ") " + name);
+						System.out.println(count + ") " + name);
 						System.out.println("Location: " + locationName + "\n");
 
-						finalcount++;
+						count++;
 					}
 				}
 				builder.setLength(0);
